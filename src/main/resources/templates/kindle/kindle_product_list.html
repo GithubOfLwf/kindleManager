@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="/css/custom.form.css">
+</head>
+<body>
+<!-- 商品列表数据 -->
+<div class="product_table_div">
+    <div id="searchParam" shiro:hasPermission="kindleProduct:list">
+        <div class="layui-form-item">
+            <div class="layui-input-inline">
+                <input type="text" id="pid" class="layui-input" autocomplete="off" placeholder="请输入产品id(精确)">
+            </div>
+            <!-- 商品模糊搜索 -->
+            <div class="layui-input-inline">
+                <input type="text" id="name" class="layui-input" autocomplete="off" placeholder="请输入产品名称（模糊）">
+            </div>
+            <div class="layui-input-inline">
+                <input type="text" id="number" class="layui-input" autocomplete="off" placeholder="请输入产品编号（模糊）">
+            </div>
+            <div class="layui-input-inline layui-form">
+                <select id="top" lay-filter="top">
+                    <option value="">请选择</option>
+                    <option value="3">top3</option>
+                    <option value="5">top5</option>
+                    <option value="10">top10</option>
+                </select>
+            </div>
+            <!-- 查询按钮 -->
+            <div class="layui-input-inline ">
+                <button class="layui-btn" onclick="search()" id="search">查询</button>
+            </div>
+        </div>
+
+    </div>
+    <table class="layui-hide" id="product_table" lay-filter="product_table"></table>
+</div>
+</body>
+
+<script src="/layui/layui.all.js"></script>
+<script src="/js/core.util.js"></script>
+<script>
+    //获取token
+    var token = CoreUtil.getData("access_token");
+    //地址栏转义token中的#号
+    var tokenQuery = token.replace("#", "%23");
+    var tableIns1;
+    var table = layui.table;
+    var form = layui.form;
+    var layer = layui.layer;
+    var $ = jQuery = layui.jquery;
+    var laydate = layui.laydate;
+    var tree = layui.tree;
+    layui.config({
+        base: '/layui-ext/'
+    }).extend({
+        eleTree: 'eleTree/eleTree'
+    }).use(['table', 'laypage', 'layer', 'laydate', 'tree', 'eleTree'], function () {
+        var eleTree = layui.eleTree;
+        tableIns1 = table.render({
+            elem: '#product_table'
+            , contentType: 'application/json'
+            , headers: {"authorization": token}
+            , page: true //开启分页
+            , url: '/kindleProduct/listByPage' //商品列表数据接口
+            , method: 'POST'
+            , parseData: function (res) { //将原始数据解析成 table 组件所规定的数据
+                return {
+                    "code": res.code, //解析接口状态
+                    "msg": res.msg, //解析提示文本
+                    "count": CoreUtil.isEmpty(res.data) ? 0 : res.data.total, //解析数据长度
+                    "data": CoreUtil.isEmpty(res.data) ? null : res.data.records //解析数据列表
+                }
+            }
+            , cols: [
+                [
+                    {field: 'pid', title: '产品id', width: '20%'},
+                    {field: 'name', title: '产品名称', width: '20%'},
+                    {field: 'categories', title: '产品类别', width: '30%'},
+                    {field: 'saleNum', title: '产品销量', width: '10%'},
+                    {field: 'reviewsRating', title: '评分（均值）', width: '10%'},
+                    {field: 'asins', title: '产品编号', width: '20%'},
+                ]
+            ],
+            done: function (res, curr,count){
+                $("table").css("width","100%")
+            }
+            , toolbar: '#toolbar'
+        });
+    });
+
+    //执行查询
+    function search() {
+        //这里以搜索为例
+        tableIns1.reload({
+            where: { //设定异步数据接口的额外参数，任意设
+                name: $("#name").val(),
+                pid: $("#pid").val(),
+                asins: $("#number").val(),
+                top: $("#top").val()
+            }
+            , page: {
+                curr: 1 //重新从第 1 页开始
+            }
+        });
+    };
+</script>
+</html>

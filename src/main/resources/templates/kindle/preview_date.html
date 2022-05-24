@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="/css/custom.form.css">
+</head>
+<body>
+
+<div class="layui-form-item">
+    <div class="layui-input-inline">
+        <label>请选择展示类型</label>
+        <select id="type" lay-filter="图形方式">
+            <option value="line">折线图</option>
+            <option value="bar">柱状图</option>
+        </select>
+    </div>
+</div>
+
+<!-- 为 ECharts 准备一个定义了宽高的 DOM，必须定义宽高才可以显示 -->
+<div style="width: 100%;height: 500px;" id="chart"></div>
+</body>
+
+<script src="/layui-ext/echarts/echarts.min.js"></script>
+<script src="/layui/layui.all.js"></script>
+<script src="/js/core.util.js"></script>
+<script   th:src="@{/js/jquery.js}"  ></script>
+
+<script type="text/javascript">
+
+    $(function(){
+        let type = "line"
+        //要触发的事件
+        GetData(null,null,type)
+
+        $("#type").change(function(){
+            //要触发的事件
+            type = $("#type").val()
+            GetData(null,null, type)
+        });
+    });
+    function GetData(startDate,endDate,type) {
+        CoreUtil.sendGet("[[@{/kindle/previewDate}]]", {startDate:startDate,endDate:endDate}, function (res) {
+            if(res.data!=null){
+                let dateArr = [];
+                let oneArr = [];
+                let twoArr = [];
+                let threeArr = [];
+                let fourArr = [];
+                let fiveArr = [];
+                res.data.forEach((element) => {
+                    dateArr.push(element.day);
+                    oneArr.push(element.one);
+                    twoArr.push(element.two);
+                    threeArr.push(element.three);
+                    fourArr.push(element.four);
+                    fiveArr.push(element.five);
+                });
+                setData(type,dateArr,oneArr,twoArr,threeArr,fourArr,fiveArr);
+            }
+        });
+    }
+    function setData(type, dateList, oneArr,twoArr,threeArr,fourArr,fiveArr){
+        // 基于准备好的dom，初始化echarts实例
+        let myChart = echarts.init(document.getElementById('chart'));
+        const option = {
+            title: {
+                text: '评分数量随时间变化图'
+            },
+            tooltip: {
+                trigger: 'axis'
+            },
+            legend: {
+                data: ['1分', '2分', '3分', '4分', '5分']
+            },
+            grid: {
+                left: '3%',
+                right: '10%',
+                bottom: '3%',
+                containLabel: true
+            },
+            toolbox: {
+                feature: {
+                    saveAsImage: {}
+                }
+            },
+            xAxis: {
+                type: 'category',
+                name: '评论时间（月份）',
+                boundaryGap: false,
+                data: dateList
+            },
+            yAxis: {
+                name: '评论次数',
+                type: 'value'
+            },
+            series: [
+                {
+                    name: '1分',
+                    type: type,
+                    stack: 'Total',
+                    data: oneArr
+                },
+                {
+                    name: '2分',
+                    type: type,
+                    stack: 'Total',
+                    data: twoArr
+                },
+                {
+                    name: '3分',
+                    type: type,
+                    stack: 'Total',
+                    data: threeArr
+                },
+                {
+                    name: '4分',
+                    type: type,
+                    stack: 'Total',
+                    data: fourArr
+                },
+                {
+                    name: '5分',
+                    type: type,
+                    stack: 'Total',
+                    data: fiveArr
+                },
+            ]
+        };
+        // 使用刚指定的配置项和数据显示图表。
+        myChart.setOption(option);
+    }
+
+</script>
+
+</html>

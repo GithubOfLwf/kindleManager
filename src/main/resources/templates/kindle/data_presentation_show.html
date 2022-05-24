@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="/css/custom.form.css">
+</head>
+<body>
+<!-- 商品评论列表数据 -->
+<div class="role_table_div">
+    <div id="searchParam" shiro:hasPermission="kindle:list">
+        <div class="layui-form-item">
+        </div>
+
+    </div>
+
+    <table class="layui-hide" id="product_review_table" lay-filter="product_review_table"></table>
+</div>
+</body>
+<script src="/layui/layui.all.js"></script>
+<script src="/js/core.util.js"></script>
+<script>
+    //获取token
+    var token = CoreUtil.getData("access_token");
+    //地址栏转义token中的#号
+    var tokenQuery = token.replace("#", "%23");
+    var tableIns1;
+    var table = layui.table;
+    var form = layui.form;
+    var layer = layui.layer;
+    var $ = jQuery = layui.jquery;
+    var laydate = layui.laydate;
+    var tree = layui.tree;
+    var startTime = null;
+    var endTime = null;
+    layui.config({
+        base: '/layui-ext/'
+    }).extend({
+        eleTree: 'eleTree/eleTree'
+    }).use(['table', 'laypage', 'layer', 'laydate', 'tree', 'eleTree'], function () {
+        var eleTree = layui.eleTree;
+        tableIns1 = table.render({
+            elem: '#product_review_table'
+            , contentType: 'application/json'
+            , headers: {"authorization": token}
+            , page: true //开启分页
+            , url: '/kindle/listByPage' //商品评论列表数据接口
+            , method: 'POST'
+            , parseData: function (res) { //将原始数据解析成 table 组件所规定的数据
+                return {
+                    "code": res.code, //解析接口状态
+                    "msg": res.msg, //解析提示文本
+                    "count": CoreUtil.isEmpty(res.data) ? 0 : res.data.total, //解析数据长度
+                    "data": CoreUtil.isEmpty(res.data) ? null : res.data.records //解析数据列表
+                }
+            }
+            , cols: [
+                [
+                    {type: 'checkbox', fixed: 'left'},
+                    {field: 'id', title: '编号', width: 50},
+                    {field: 'pid', title: '产品id', width: 200},
+                    {field: 'name', title: '产品名称', width: 200},
+                    {field: 'asins', title: '产品编号', minWidth: 150},
+                    {field: 'brand', title: '品牌', minWidth: 120},
+                    {field: 'categories', title: '产品类别', width: 200},
+                    {field: 'manufacturer', title: '制造商', minWidth: 120},
+                    {field: 'reviewsTitle', title: '评论标题', width: 200},
+                    {field: 'reviewsText', title: '评论文字内容', minWidth: 120},
+                    {field: 'reviewsSourceurls', title: '评论链接', minWidth: 120},
+                    {field: 'reviewsRating', title: '评分', minWidth: 120},
+                    {field: 'reviewsDate', title: '评论时间', minWidth: 120},
+                    {field: 'reviewsDateadded', title: '追评时间', width: 200},
+                    {field: 'reviewsDorecommend', title: '评论是否被推荐', minWidth: 120},
+                    {field: 'reviewsUsername', title: '用户名', minWidth: 120},
+                ]
+            ]
+            , toolbar: '#toolbar'
+        });
+    });
+
+    //操作项事件
+    table.on('tool(product_review_table)', function (obj) {
+        var data = obj.data;
+        switch (obj.event) {
+            case 'del':
+                deletedKindle(data.id);
+                break;
+        }
+    });
+</script>
+</html>

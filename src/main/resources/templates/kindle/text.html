@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="layui/css/layui.css" media="all">
+    <script src="js/jquery.js" charset="utf-8"></script>
+    <script src="js/echarts.min.js" charset="utf-8"></script>
+    <script src="js/visual.js" charset="utf-8"></script>
+    <script src="layui/layui.js" charset="utf-8"></script>
+</head>
+<body>
+<div class="demoTable">
+    搜索ID：
+    <div class="layui-input-inline">
+        <input type="text" id="brand" class="layui-input" autocomplete="off" placeholder="请输入品牌名称">
+    </div>
+    <button class="layui-btn" data-type="reload">搜索</button>
+</div>
+
+<table class="layui-hide" id="test"></table>
+
+</body>
+<script>
+    layui.use(['table', 'layer', 'form'], function () {
+        var table = layui.table;
+        var util = layui.util;
+
+        table.render({
+            elem: '#test'
+            , url: 'data.php'
+            , layout: ['count', 'prev', 'page', 'next', 'limit', 'skip']
+            , limits: [5, 10, 15, 20]
+            , toolbar: true
+            , even: true
+            , page: true
+            , id: 'searchTable'
+            , cols: [[
+                {type: 'numbers'}
+                , {field: 'vid', title: 'Id', sort: true}
+                , {field: 'brand', title: '品牌名', sort: true}
+                , {field: 'vdata', title: '销量'}
+                , {field: 'reviews_date', title: '时间', templet: function (d) {return util.toDateString(d.vctime * 1000, "yyyy-MM-dd HH:mm:ss")}}
+
+            ]]
+            , done: function (res, curr, count) {
+                console.log(res);
+                var dataName = [], dataList = [];
+                for (var i = 0; i < res.data.length; i++) {
+                    dataName.push(res.data[i].brand);
+                    dataList.push(res.data[i].vdata);
+                }
+                //渲染图表;
+                echart1Str(brand, dataList);
+            }
+        });
+
+        var $ = layui.$, active = {
+            reload: function () {
+                var demoReload = $('#demoReload');
+
+                //执行重载
+                table.reload('searchTable', {
+                    page: {
+                        curr: 1 //重新从第 1 页开始
+                    }
+                    , where: {
+                        keys: demoReload.val()
+                    }
+                });
+            }
+        };
+
+        $('.demoTable .layui-btn').on('click', function () {
+            var type = $(this).data('type');
+            active[type] ? active[type].call(this) : '';
+        });
+
+    });
+    //柱形函数
+    /**
+     * Created by Administrator on 2020-08-02.
+     */
+    function echart1Str(brand, dataList) {
+        var myChart = echarts.init(document.getElementById('main'));
+        var option = {
+            grid: {
+                top: '5%',
+                right: '2%',
+                left: '2%',
+                bottom: '5%'
+            },
+            tooltip: {
+                trigger: 'item',
+                axisPointer: {
+                    lineStyle: {
+                        color: '#57617B'
+                    }
+                }
+            },
+            xAxis: [{
+                type: 'category',
+                data: brand,
+                axisPointer: {
+                    type: 'line'
+                },
+                axisLine: {
+                    lineStyle: {
+                        color: '#272456'
+                    }
+                },
+                axisLabel: {
+                    textStyle: {
+                        fontSize: 12,
+                        color: 'rgba(0,0,0,0.5)',
+                    }
+                },
+            }],
+            yAxis: [{
+                axisLabel: {
+                    formatter: '{value}',
+                    textStyle: {
+                        fontSize: 12,
+                        color: 'rgba(0,0,0,0.5)',
+                    }
+                },
+                axisLine: {
+                    lineStyle: {
+                        color: '#272456'
+                    }
+                },
+                splitLine: {
+                    lineStyle: {
+                        color: 'rgba(0,0,0,0.2)'
+                    }
+                }
+            }],
+            series: [{
+                type: 'bar',
+                data: dataList,
+                barWidth: '50%',
+                itemStyle: {
+                    normal: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                            offset: 0,
+                            color: '#39e7d7'
+                        }, {
+                            offset: 1,
+                            color: '#10A7DB'
+                        }], false),
+                        barBorderRadius: [5, 5, 0, 0],
+                        /*shadowColor: 'rgba(0,255,225,1)',
+                         shadowBlur: 4,*/
+                    }
+                }
+            }]
+        };
+
+
+        myChart.setOption(option);
+        window.addEventListener("resize", function () {
+            myChart.resize();
+        });
+
+    }
+    
+</script>
+</html>
